@@ -16,7 +16,7 @@ impl FuzzySearch {
         options: &FuzzySearchOptions,
     ) -> Vec<MatchResult> {
         let results = FuzzySearch::find_levenshtein_all(subsequence, text, options);
-
+        // let consolidated = Self::consolidate_matches(text, results, options.max_total_distance);
         // todo so this should actually be run through the match consolidation logic...
         // todo should return an iterator
         // todo lots of stuff...
@@ -141,6 +141,68 @@ impl FuzzySearch {
                     ..*candidate
                 });
             }
+        }
+    }
+
+    /// Group matches and return best.
+    /// Currently assumes the matches are in the same order they are found...
+    fn consolidate_matches(
+        text: &str,
+        matches: Vec<CandidateMatch>,
+        max_distance: usize,
+    ) -> Vec<MatchResult> {
+        let mut matches_iter = matches.into_iter();
+        let mut group = Vec::new();
+
+        let mut results = Vec::new(); // todo iterator...
+
+        if let Some(first_match) = matches_iter.next() {
+            group.push(first_match);
+
+            let mut match_start_index = first_match.start_index;
+
+            while let Some(next_match) = matches_iter.next() {
+                if next_match.start_index > (match_start_index + max_distance as usize) {
+                    if !group.is_empty() {
+                        results.push(Self::get_best_match_from_group(&group, text));
+                        group.clear();
+                    }
+                }
+
+                group.push(next_match);
+                match_start_index = next_match.start_index;
+            }
+        }
+
+        if !group.is_empty() {
+            results.push(Self::get_best_match_from_group(&group, text));
+        }
+
+        results
+    }
+
+    #[inline(always)]
+    fn get_best_match_from_group(group: &Vec<CandidateMatch>, text: &str) -> MatchResult {
+        let mut best_match = group.first().unwrap();
+
+        for match_item in group.iter().skip(1) {
+            if match_item.distance < best_match.distance
+                || (match_item.distance == best_match.distance
+                    && (match_item.start_index - match_item.text_index)
+                        > (best_match.start_index - best_match.text_index))
+            {
+                best_match = match_item;
+            }
+        }
+
+        MatchResult {
+            start_index: best_match.start_index,
+            end_index: best_match.text_index,
+            distance: best_match.distance,
+            match_text: text[best_match.start_index..best_match.text_index].to_string(),
+            deletions: best_match.deletions,
+            insertions: best_match.insertions,
+            substitutions: best_match.substitutions,
         }
     }
 }
