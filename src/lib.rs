@@ -15,23 +15,11 @@ impl FuzzySearch {
         text: &str,
         options: &FuzzySearchOptions,
     ) -> Vec<MatchResult> {
-        let results = FuzzySearch::find_levenshtein_all(subsequence, text, options);
-        // let consolidated = Self::consolidate_matches(text, results, options.max_total_distance);
-        // todo so this should actually be run through the match consolidation logic...
-        // todo should return an iterator
-        // todo lots of stuff...
-        results
-            .iter()
-            .map(|v| MatchResult {
-                deletions: v.deletions,
-                start_index: v.start_index,
-                end_index: v.text_index,
-                distance: v.distance,
-                match_text: text[v.start_index..v.text_index].to_string(),
-                substitutions: v.substitutions,
-                insertions: v.insertions,
-            })
-            .collect()
+        Self::consolidate_matches(
+            text,
+            FuzzySearch::find_levenshtein_all(subsequence, text, options),
+            options.max_total_distance,
+        )
     }
 
     pub fn find_levenshtein_all(
@@ -185,11 +173,18 @@ impl FuzzySearch {
     fn get_best_match_from_group(group: &Vec<CandidateMatch>, text: &str) -> MatchResult {
         let mut best_match = group.first().unwrap();
 
+        // todo figure out if we can get rid of the checked_sub by ensuring it never is negative...
         for match_item in group.iter().skip(1) {
             if match_item.distance < best_match.distance
                 || (match_item.distance == best_match.distance
-                    && (match_item.start_index - match_item.text_index)
-                        > (best_match.start_index - best_match.text_index))
+                    && (match_item
+                        .start_index
+                        .checked_sub(match_item.text_index)
+                        .unwrap_or(0))
+                        > (best_match
+                            .start_index
+                            .checked_sub(best_match.text_index)
+                            .unwrap_or(0)))
             {
                 best_match = match_item;
             }
@@ -277,6 +272,90 @@ mod tests {
         run_test("1234567", "-----23567", 2, 4, "-23567", 2);
     }
 
+    #[test]
+    fn test_pattern_patt_ern_1_10() {
+        run_test(
+            "PATTERN",
+            "----------PATT-ERN---------",
+            1,
+            10,
+            "PATT-ERN",
+            1,
+        );
+    }
+
+    #[test]
+    fn test_pattern_patt_ern_2_10() {
+        run_test(
+            "PATTERN",
+            "----------PATT-ERN---------",
+            2,
+            10,
+            "PATT-ERN",
+            1,
+        );
+    }
+
+    #[test]
+    fn test_pattern_patttern_1_10() {
+        run_test(
+            "PATTERN",
+            "----------PATTTERN---------",
+            1,
+            10,
+            "PATTTERN",
+            1,
+        );
+    }
+
+    #[test]
+    fn test_pattern_patttern_2_10() {
+        run_test(
+            "PATTERN",
+            "----------PATTTERN---------",
+            2,
+            10,
+            "PATTTERN",
+            1,
+        );
+    }
+
+    #[test]
+    fn test_pattern_patternn_0_10() {
+        run_test(
+            "PATTERN",
+            "----------PATTERNN---------",
+            0,
+            10,
+            "PATTERN",
+            0,
+        );
+    }
+
+    #[test]
+    fn test_pattern_patternn_1_10() {
+        run_test(
+            "PATTERN",
+            "----------PATTERNN---------",
+            1,
+            10,
+            "PATTERN",
+            0,
+        );
+    }
+
+    #[test]
+    fn test_pattern_patternn_2_10() {
+        run_test(
+            "PATTERN",
+            "----------PATTERNN---------",
+            2,
+            10,
+            "PATTERN",
+            0,
+        );
+    }
+
     fn run_test(
         pattern: &str,
         text: &str,
@@ -308,3 +387,5 @@ mod tests {
         assert_eq!(result.distance, expected_distance);
     }
 }
+
+// todo rest...
