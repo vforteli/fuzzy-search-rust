@@ -27,12 +27,11 @@ impl FuzzySearch {
         text: &str,
         options: &FuzzySearchOptions,
     ) -> Vec<CandidateMatch> {
-        if subsequence.is_empty() {
-            return Vec::new();
-        }
-
-        // todo this should be removed and the whole function be converted to an iterator
         let mut results = Vec::new();
+
+        if subsequence.is_empty() {
+            return results;
+        }
 
         let mut candidates = Vec::new();
         let text_array: Vec<char> = text.chars().collect();
@@ -51,12 +50,8 @@ impl FuzzySearch {
 
                     if candidate.distance == 0 {
                         candidates.clear();
-                        break;
                     }
-
-                    continue;
-                }
-
+                } else {
                 FuzzySearch::handle_candidate(
                     &mut candidates,
                     &candidate,
@@ -66,6 +61,7 @@ impl FuzzySearch {
                     options,
                     text.len(),
                 );
+                }
             }
         }
 
