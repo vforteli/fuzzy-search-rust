@@ -2,10 +2,10 @@ use candidate_match::CandidateMatch;
 use fuzzy_search_options::FuzzySearchOptions;
 use match_result::MatchResult;
 
-mod candidate_match;
-mod fuzzy_search_options;
-mod match_result;
-mod match_result_value;
+pub mod candidate_match;
+pub mod fuzzy_search_options;
+pub mod match_result;
+pub mod match_result_value;
 
 pub struct FuzzySearch;
 
