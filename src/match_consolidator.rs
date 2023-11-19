@@ -1,20 +1,21 @@
 use crate::{candidate_match::CandidateMatch, match_result::MatchResult};
 
-pub struct MatchConsolidator<'a, TIterator> {
+pub struct MatchConsolidator<'a, TIterator: Iterator<Item = CandidateMatch>> {
     text: &'a str,
     matches: &'a mut TIterator,
     max_distance: usize,
+    group: Vec<CandidateMatch>,
+    match_start_index: usize,
 }
 
-impl<'a, TIterator: 'a> MatchConsolidator<'a, TIterator> {
-    pub fn consolidate(max_distance: usize, text: &'a str, matches: &'a mut TIterator) -> Self
-    where
-        TIterator: Iterator<Item = CandidateMatch>,
-    {
+impl<'a, TIterator: Iterator<Item = CandidateMatch>> MatchConsolidator<'a, TIterator> {
+    pub fn consolidate(max_distance: usize, text: &'a str, matches: &'a mut TIterator) -> Self {
         Self {
             text,
             matches,
             max_distance,
+            group: Vec::new(),
+            match_start_index: 0,
         }
     }
 
@@ -55,29 +56,33 @@ impl<'a, TIterator: Iterator<Item = CandidateMatch>> Iterator for MatchConsolida
     type Item = MatchResult;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut group = Vec::new();
-
         if let Some(first_match) = self.matches.next() {
-            group.push(first_match);
-
-            let mut match_start_index = first_match.start_index;
+            self.group.push(first_match);
+            self.match_start_index = first_match.start_index;
 
             while let Some(next_match) = self.matches.next() {
-                if next_match.start_index > (match_start_index + self.max_distance) {
-                    if !group.is_empty() {
-                        // todo fix...
-                        // results.push(Self::get_best_match_from_group(&group, text));
-                        group.clear();
+                if next_match.start_index > (self.match_start_index + self.max_distance) {
+                    if !self.group.is_empty() {
+                        let best_match = Self::get_best_match_from_group(&self.group, self.text);
+
+                        self.group.clear();
+                        self.group.push(next_match);
+                        self.match_start_index = next_match.start_index;
+
+                        return Some(best_match);
                     }
                 }
 
-                group.push(next_match);
-                match_start_index = next_match.start_index;
+                self.group.push(next_match);
+                self.match_start_index = next_match.start_index;
             }
         }
 
-        if !group.is_empty() {
-            return Some(Self::get_best_match_from_group(&group, self.text));
+        if !self.group.is_empty() {
+            let best_match = Self::get_best_match_from_group(&self.group, self.text);
+            self.group.clear();
+            self.group.clear();
+            return Some(best_match);
         }
 
         None
