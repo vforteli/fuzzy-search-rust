@@ -65,6 +65,7 @@ impl<'a, TIterator: Iterator<Item = CandidateMatch>> Iterator for MatchConsolida
             while let Some(next_match) = self.matches.next() {
                 if next_match.start_index > (match_start_index + self.max_distance) {
                     if !group.is_empty() {
+                        // todo fix...
                         // results.push(Self::get_best_match_from_group(&group, text));
                         group.clear();
                     }
