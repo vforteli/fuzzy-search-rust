@@ -13,11 +13,16 @@ pub struct FuzzySearch;
 
 impl FuzzySearch {
     pub fn find(subsequence: &str, text: &str, options: &FuzzySearchOptions) -> Vec<MatchResult> {
-        let mut matches = FuzzySearchLevenshtein::find(subsequence, text, options);
+        if text.len() == 0 || subsequence.len() == 0 {
+            return Vec::new();
+        }
 
-        MatchConsolidator::consolidate(options.max_total_distance, text, &mut matches).collect()
-
-        // Self::consolidate_matches(text, &mut matches, options.max_total_distance)
+        MatchConsolidator::consolidate(
+            options.max_total_distance,
+            text,
+            &mut FuzzySearchLevenshtein::find(subsequence, text, options),
+        )
+        .collect()
     }
 }
 
@@ -236,6 +241,182 @@ mod tests {
         assert_eq!(result.match_text, expected_match);
         assert_eq!(result.distance, expected_distance);
     }
-}
 
-// todo rest...
+    #[test]
+    fn test_options_max_substitutions() {
+        let word = "pattern";
+        let text = "--patteron--";
+        let options = FuzzySearchOptions::with_individual_limits(1, 0, 0);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 1);
+        assert_match(&results[0], 2, "pattero", 1);
+    }
+
+    #[test]
+    fn test_options_max_substitutions_0() {
+        let word = "patternsandpractices";
+        let text = "--patternsaxdpractices--";
+        let options = FuzzySearchOptions::with_limits(1, Some(0), None, None);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_options_max_insertions() {
+        let word = "pattern";
+        let text = "--patteron--";
+        let options = FuzzySearchOptions::with_individual_limits(0, 0, 1);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 1);
+        assert_match(&results[0], 2, "patteron", 1);
+    }
+
+    #[test]
+    fn test_options_max_insertions_0() {
+        let word = "patternsandpractices";
+        let text = "--patternsaxndpractices--";
+        let options = FuzzySearchOptions::with_limits(1, None, None, Some(0));
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_options_max_deletions() {
+        let word = "pattern";
+        let text = "--patteron--";
+        let options = FuzzySearchOptions::with_individual_limits(0, 1, 0);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 1);
+        assert_match(&results[0], 2, "patter", 1);
+    }
+
+    #[test]
+    fn test_options_max_deletions_0() {
+        let word = "patternsandpractices";
+        let text = "--patternandpractices--";
+        let options = FuzzySearchOptions::with_limits(1, None, Some(0), None);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_multiple_matches_consecutive_substitutions() {
+        let word = "pattern";
+        let text = "--pattermpatyern--";
+        let options = FuzzySearchOptions::new(2);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 2);
+        assert_match(&results[0], 2, "patterm", 1);
+        assert_match(&results[1], 9, "patyern", 1);
+    }
+
+    #[test]
+    fn test_multiple_matches_consecutive_insertion() {
+        let word = "pattern";
+        let text = "--patyternpatxtern--";
+        let options = FuzzySearchOptions::new(1);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 2);
+        assert_match(&results[0], 2, "patytern", 1);
+        assert_match(&results[1], 10, "patxtern", 1);
+    }
+
+    #[test]
+    fn test_overlapping_matches() {
+        let word = "pattern";
+        let text = "--pattpatterntern--";
+        let options = FuzzySearchOptions::new(2);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 1);
+        assert_match(&results[0], 6, "pattern", 0);
+    }
+
+    #[test]
+    fn test_multiple_matches_consecutive_deletion() {
+        let word = "pattern";
+        let text = "--pattrnpttern--";
+        let options = FuzzySearchOptions::new(2);
+
+        let results = FuzzySearch::find(word, text, &options);
+
+        assert_eq!(results.len(), 2);
+        assert_match(&results[0], 2, "pattrn", 1);
+        assert_match(&results[1], 8, "pttern", 1);
+    }
+
+    #[test]
+    fn test_empty_text() {
+        let pattern = "PATTERN";
+        let text = "";
+        let options = FuzzySearchOptions::new(2);
+
+        let results = FuzzySearch::find(pattern, text, &options);
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_empty_pattern() {
+        let pattern = "";
+        let text = "sometext";
+        let options = FuzzySearchOptions::new(2);
+
+        let results = FuzzySearch::find(pattern, text, &options);
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_empty_pattern_and_text() {
+        let pattern = "";
+        let text = "";
+        let options = FuzzySearchOptions::new(2);
+
+        let results = FuzzySearch::find(pattern, text, &options);
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_shorter_text() {
+        let pattern = "PATTERN";
+        let text = "PATERN";
+        let expected_matches = 1;
+        let options = FuzzySearchOptions::new(1);
+
+        let results = FuzzySearch::find(pattern, text, &options);
+
+        assert_eq!(results.len(), expected_matches);
+        assert_match(&results[0], 0, "PATERN", 1);
+    }
+
+    #[test]
+    fn test_shorter_text_no_match() {
+        let pattern = "PATTERN";
+        let text = "PAERN";
+        let expected_matches = 0;
+        let options = FuzzySearchOptions::new(1);
+
+        let results = FuzzySearch::find(pattern, text, &options);
+
+        assert_eq!(results.len(), expected_matches);
+    }
+}
