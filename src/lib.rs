@@ -8,7 +8,6 @@ mod fuzzy_search_levenshtein;
 pub mod fuzzy_search_options;
 mod match_consolidator;
 pub mod match_result;
-pub mod match_result_value;
 
 pub struct FuzzySearch;
 
