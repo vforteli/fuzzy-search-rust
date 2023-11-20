@@ -18,7 +18,12 @@ impl<'a> FuzzySearchLevenshtein<'a> {
             text,
             candidates: vec![CandidateMatch::new(0, 0)],
             text_array: text.chars().collect(),
-            current_text_index: 0,
+            current_text_index: if subsequence.len() == 0 {
+                // this is basically here to eagerly terminate stuff if subsequence is an empty string without checking in the next function
+                text.len() + 1
+            } else {
+                0
+            },
             best_found_distance: options.max_total_distance,
         }
     }

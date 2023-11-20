@@ -8,7 +8,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("some bench", |b| {
         b.iter(|| {
-            let _ = FuzzySearch::find(subsequence, text, &options);
+            let _ = FuzzySearch::find(subsequence, text, &options).collect::<Vec<_>>();
         })
     });
 }
