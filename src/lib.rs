@@ -8,6 +8,7 @@ mod fuzzy_search_levenshtein;
 pub mod fuzzy_search_options;
 mod match_consolidator;
 pub mod match_result;
+mod test;
 
 pub struct FuzzySearch<'a> {
     consolidated_matches: MatchConsolidator<'a, FuzzySearchLevenshtein<'a>>,
