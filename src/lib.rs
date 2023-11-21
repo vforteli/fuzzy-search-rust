@@ -426,4 +426,247 @@ mod tests {
 
         assert_eq!(results.len(), expected_matches);
     }
+
+    fn run_test_other(
+        pattern: &str,
+        text: &str,
+        expected_start: usize,
+        expected_match: &str,
+        expected_distance: usize,
+        max_distance: usize,
+    ) {
+        let options = FuzzySearchOptions::new(max_distance);
+        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+
+        assert_eq!(results.len(), 1);
+
+        assert_match(
+            &results[0],
+            expected_start,
+            expected_match,
+            expected_distance,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattern_exact_match() {
+        run_test_other(
+            "pattern",
+            "pattern---------------------",
+            0,
+            "pattern",
+            0,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_atern_partial_match() {
+        run_test_other("pattern", "attern---------------------", 0, "attern", 1, 3);
+    }
+
+    #[test]
+    fn test_pattern_ttern_partial_match() {
+        run_test_other("pattern", "ttern---------------------", 0, "ttern", 2, 3);
+    }
+
+    #[test]
+    fn test_pattern_tern_partial_match() {
+        run_test_other("pattern", "tern---------------------", 0, "tern", 3, 3);
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match() {
+        run_test_other(
+            "pattern",
+            "--------pattttern-------------",
+            8,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_2() {
+        run_test_other(
+            "pattern",
+            "---------pattttern------------",
+            9,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_3() {
+        run_test_other(
+            "pattern",
+            "----------pattttern-----------",
+            10,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_4() {
+        run_test_other(
+            "pattern",
+            "-----------pattttern----------",
+            11,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_5() {
+        run_test_other(
+            "pattern",
+            "------------pattttern---------",
+            12,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_6() {
+        run_test_other(
+            "pattern",
+            "-------------pattttern--------",
+            13,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_7() {
+        run_test_other(
+            "pattern",
+            "--------------pattttern-------",
+            14,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_8() {
+        run_test_other(
+            "pattern",
+            "---------------pattttern------",
+            15,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_9() {
+        run_test_other(
+            "pattern",
+            "----------------pattttern-----",
+            16,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_10() {
+        run_test_other(
+            "pattern",
+            "-----------------pattttern----",
+            17,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_11() {
+        run_test_other(
+            "pattern",
+            "------------------pattttern---",
+            18,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_12() {
+        run_test_other(
+            "pattern",
+            "-------------------pattttern--",
+            19,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_13() {
+        run_test_other(
+            "pattern",
+            "--------------------pattttern-",
+            20,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_14() {
+        run_test_other(
+            "pattern",
+            "---------------------pattttern",
+            21,
+            "pattttern",
+            2,
+            3,
+        );
+    }
+
+    #[test]
+    fn test_pattern_patter_partial_match() {
+        run_test_other("pattern", "---patter", 3, "patter", 1, 3);
+    }
+
+    #[test]
+    fn test_pattern_patte_partial_match() {
+        run_test_other("pattern", "---patte", 3, "patte", 2, 3);
+    }
+
+    #[test]
+    fn test_pattern_patt_partial_match() {
+        run_test_other("pattern", "---patt", 3, "patt", 3, 3);
+    }
+
+    #[test]
+    fn test_pattern_pattttern_partial_match_15() {
+        run_test_other(
+            "pattern",
+            "----------------------pattttern",
+            22,
+            "pattttern",
+            2,
+            3,
+        );
+    }
 }
