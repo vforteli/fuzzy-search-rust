@@ -244,8 +244,8 @@ mod tests {
         expected_match: &str,
         expected_distance: usize,
     ) {
-        assert_eq!(result.start_index, expected_start);
         assert_eq!(result.match_text, expected_match);
+        assert_eq!(result.start_index, expected_start);
         assert_eq!(result.distance, expected_distance);
     }
 

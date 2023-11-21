@@ -5,7 +5,7 @@ pub struct MatchConsolidator<'a, TIterator: Iterator<Item = CandidateMatch>> {
     matches: TIterator,
     max_distance: usize,
     group: Vec<CandidateMatch>,
-    match_start_index: usize,
+    // match_start_index: usize,
 }
 
 impl<'a, TIterator: Iterator<Item = CandidateMatch>> MatchConsolidator<'a, TIterator> {
@@ -15,7 +15,6 @@ impl<'a, TIterator: Iterator<Item = CandidateMatch>> MatchConsolidator<'a, TIter
             matches,
             max_distance,
             group: Vec::new(),
-            match_start_index: 0,
         }
     }
 
@@ -51,29 +50,24 @@ impl<'a, TIterator: Iterator<Item = CandidateMatch>> Iterator for MatchConsolida
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(first_match) = self.matches.next() {
             self.group.push(first_match);
-            self.match_start_index = first_match.start_index;
 
             while let Some(next_match) = self.matches.next() {
-                if next_match.start_index > (self.match_start_index + self.max_distance) {
-                    if !self.group.is_empty() {
-                        let best_match = Self::get_best_match_from_group(&self.group, self.text);
+                let match_start_index = &self.group.last().unwrap().start_index; // hmm.. unwrap...
+                if next_match.start_index > (match_start_index + self.max_distance) {
+                    let best_match = Self::get_best_match_from_group(&self.group, self.text);
 
-                        self.group.clear();
-                        self.group.push(next_match);
-                        self.match_start_index = next_match.start_index;
+                    self.group.clear();
+                    self.group.push(next_match);
 
-                        return Some(best_match);
-                    }
+                    return Some(best_match);
                 }
 
                 self.group.push(next_match);
-                self.match_start_index = next_match.start_index;
             }
         }
 
         if !self.group.is_empty() {
             let best_match = Self::get_best_match_from_group(&self.group, self.text);
-            self.group.clear();
             self.group.clear();
             return Some(best_match);
         }
