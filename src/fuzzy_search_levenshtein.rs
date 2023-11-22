@@ -1,7 +1,7 @@
 use crate::{candidate_match::CandidateMatch, fuzzy_search_options::FuzzySearchOptions};
 
 pub struct FuzzySearchLevenshtein<'a> {
-    subsequence: &'a str,
+    pattern: &'a str,
     text: &'a str,
     text_array: Vec<char>, // todo get rid of this...
     options: &'a FuzzySearchOptions,
@@ -11,15 +11,15 @@ pub struct FuzzySearchLevenshtein<'a> {
 }
 
 impl<'a> FuzzySearchLevenshtein<'a> {
-    pub fn find(subsequence: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
+    pub fn find(pattern: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
         Self {
             options,
-            subsequence,
+            pattern,
             text,
             candidates: vec![CandidateMatch::new(0, 0)],
             text_array: text.chars().collect(),
-            current_text_index: if subsequence.len() == 0 {
-                // this is basically here to eagerly terminate stuff if subsequence is an empty string without checking in the next function
+            current_text_index: if pattern.len() == 0 {
+                // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
                 text.len() + 1
             } else {
                 0
@@ -33,16 +33,16 @@ impl<'a> FuzzySearchLevenshtein<'a> {
         candidates: &mut Vec<CandidateMatch>,
         candidate: &CandidateMatch,
         text: &[char],
-        subsequence: &str,
+        pattern: &str,
         best_found_distance: usize,
         options: &FuzzySearchOptions,
         text_length: usize,
     ) {
         if candidate.text_index < text_length
             && text[candidate.text_index]
-                == subsequence
+                == pattern
                     .chars()
-                    .nth(candidate.subsequence_index)
+                    .nth(candidate.pattern_index)
                     .expect("How did we end up here?")
         {
             if candidate.distance < best_found_distance
@@ -52,7 +52,7 @@ impl<'a> FuzzySearchLevenshtein<'a> {
                 candidates.push(CandidateMatch {
                     insertions: candidate.insertions + 1,
                     distance: candidate.distance + 1,
-                    subsequence_index: candidate.subsequence_index + 1,
+                    pattern_index: candidate.pattern_index + 1,
                     text_index: candidate.text_index + 2,
                     ..*candidate
                 });
@@ -61,16 +61,16 @@ impl<'a> FuzzySearchLevenshtein<'a> {
             // match
             candidates.push(CandidateMatch {
                 text_index: candidate.text_index + 1,
-                subsequence_index: candidate.subsequence_index + 1,
+                pattern_index: candidate.pattern_index + 1,
                 ..*candidate
             });
         } else if candidate.distance < best_found_distance {
             if options.can_delete(candidate.distance, candidate.deletions) {
-                // jump over one character in subsequence
+                // jump over one character in pattern
                 candidates.push(CandidateMatch {
                     deletions: candidate.deletions + 1,
                     distance: candidate.distance + 1,
-                    subsequence_index: candidate.subsequence_index + 1,
+                    pattern_index: candidate.pattern_index + 1,
                     ..*candidate
                 });
             }
@@ -81,7 +81,7 @@ impl<'a> FuzzySearchLevenshtein<'a> {
                     substitutions: candidate.substitutions + 1,
                     distance: candidate.distance + 1,
                     text_index: candidate.text_index + 1,
-                    subsequence_index: candidate.subsequence_index + 1,
+                    pattern_index: candidate.pattern_index + 1,
                     ..*candidate
                 });
             }
@@ -95,7 +95,7 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.current_text_index < self.text.len() {
             while let Some(candidate) = self.candidates.pop() {
-                if candidate.subsequence_index == self.subsequence.len() {
+                if candidate.pattern_index == self.pattern.len() {
                     if candidate.text_index <= self.text.len() {
                         if candidate.distance == 0 {
                             self.candidates.clear();
@@ -118,7 +118,7 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
                         &mut self.candidates,
                         &candidate,
                         &self.text_array,
-                        self.subsequence,
+                        self.pattern,
                         self.best_found_distance,
                         self.options,
                         self.text.len(),

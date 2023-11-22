@@ -14,12 +14,12 @@ pub struct FuzzySearch<'a> {
 }
 
 impl<'a> FuzzySearch<'a> {
-    pub fn find(subsequence: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
+    pub fn find(pattern: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
         Self {
             consolidated_matches: MatchConsolidator::consolidate(
                 options.max_total_distance,
                 text,
-                FuzzySearchLevenshtein::find(subsequence, text, options),
+                FuzzySearchLevenshtein::find(pattern, text, options),
             ),
         }
     }
