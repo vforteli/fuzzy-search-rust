@@ -1,9 +1,9 @@
 use crate::{candidate_match::CandidateMatch, fuzzy_search_options::FuzzySearchOptions};
 
 pub struct FuzzySearchLevenshtein<'a> {
-    pattern_array: Vec<char>, // todo get rid of this...
+    pattern_chars: Vec<char>, // todo get rid of this...
     text: &'a str,            // todo no seriously, this will explode with graphemes
-    text_array: Vec<char>,    // todo get rid of this...
+    text_chars: Vec<char>,    // todo get rid of this...
     options: &'a FuzzySearchOptions,
     candidates: Vec<CandidateMatch>,
     current_text_index: usize,
@@ -14,10 +14,10 @@ impl<'a> FuzzySearchLevenshtein<'a> {
     pub fn find(pattern: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
         Self {
             options,
-            pattern_array: pattern.chars().collect(),
+            pattern_chars: pattern.chars().collect(),
             text,
             candidates: vec![CandidateMatch::new(0, 0)],
-            text_array: text.chars().collect(),
+            text_chars: text.chars().collect(),
             current_text_index: if pattern.len() == 0 {
                 // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
                 text.len() + 1
@@ -91,7 +91,7 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.current_text_index < self.text.len() {
             while let Some(candidate) = self.candidates.pop() {
-                if candidate.pattern_index == self.pattern_array.len() {
+                if candidate.pattern_index == self.pattern_chars.len() {
                     if candidate.text_index <= self.text.len() {
                         if candidate.distance == 0 {
                             self.candidates.clear();
@@ -113,8 +113,8 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
                     Self::handle_candidate(
                         &mut self.candidates,
                         &candidate,
-                        &self.text_array,
-                        &self.pattern_array,
+                        &self.text_chars,
+                        &self.pattern_chars,
                         self.best_found_distance,
                         self.options,
                         self.text.len(),
