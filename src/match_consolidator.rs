@@ -5,7 +5,6 @@ pub struct MatchConsolidator<'a, TIterator: Iterator<Item = CandidateMatch>> {
     matches: TIterator,
     max_distance: usize,
     group: Vec<CandidateMatch>,
-    // match_start_index: usize,
 }
 
 impl<'a, TIterator: Iterator<Item = CandidateMatch>> MatchConsolidator<'a, TIterator> {
@@ -24,13 +23,10 @@ impl<'a, TIterator: Iterator<Item = CandidateMatch>> MatchConsolidator<'a, TIter
             .iter()
             .min_by(|a, b| {
                 a.distance.cmp(&b.distance).then_with(|| {
-                    b.start_index
-                        .checked_sub(b.text_index)
-                        .unwrap_or(0)
-                        .cmp(&a.start_index.checked_sub(a.text_index).unwrap_or(0))
+                    (b.text_index - b.start_index).cmp(&(a.text_index - a.start_index))
                 })
             })
-            .unwrap();
+            .expect("uh, why no cancidatematch?");
 
         MatchResult {
             start_index: best_match.start_index,

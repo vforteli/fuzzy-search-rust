@@ -669,4 +669,148 @@ mod tests {
             3,
         );
     }
+
+    #[test]
+    fn test_case_1() {
+        run_test_other("ab", "-a", 1, "a", 1, 1);
+    }
+
+    #[test]
+    fn test_case_2() {
+        run_test_other("ab", "b---", 0, "b", 1, 1);
+    }
+
+    #[test]
+    fn test_case_3() {
+        run_test_other("ab", "-axb", 1, "axb", 1, 1);
+    }
+
+    #[test]
+    fn test_case_4() {
+        run_test_other("ab", "axb-", 0, "axb", 1, 1);
+    }
+
+    #[test]
+    fn test_case_5() {
+        run_test_other("ab", "--ax", 2, "ax", 1, 1);
+    }
+
+    #[test]
+    fn test_case_6() {
+        run_test_other("ab", "ax--", 0, "ax", 1, 1);
+    }
+
+    #[test]
+    fn test_case_7() {
+        run_test_other("ab", "--ab", 2, "ab", 0, 1);
+    }
+
+    #[test]
+    fn test_case_8() {
+        run_test_other("ab", "ab--", 0, "ab", 0, 1);
+    }
+
+    #[test]
+    fn test_case_9() {
+        run_test_other("ab", "ab", 0, "ab", 0, 1);
+    }
+
+    #[test]
+    fn test_case_10() {
+        run_test_other("ab", "-ab", 1, "ab", 0, 1);
+    }
+
+    #[test]
+    fn test_case_11() {
+        run_test_other("ab", "ab-", 0, "ab", 0, 1);
+    }
+
+    #[test]
+    fn test_case_12() {
+        run_test_other("ab", "b", 0, "b", 1, 1);
+    }
+
+    #[test]
+    fn test_case_13() {
+        run_test_other("ab", "a", 0, "a", 1, 1);
+    }
+
+    #[test]
+    fn test_case_14() {
+        run_test_other("a", "a", 0, "a", 0, 1);
+    }
+
+    #[test]
+    fn test_case_15() {
+        run_test_other("ab", "axb", 0, "axb", 1, 1);
+    }
+
+    #[test]
+    fn test_case_16() {
+        run_test_other("abc", "a", 0, "a", 2, 2);
+    }
+
+    #[test]
+    fn test_case_17() {
+        run_test_other("abc", "b", 0, "b", 2, 2);
+    }
+
+    #[test]
+    fn test_case_18() {
+        run_test_other("abc", "c", 0, "c", 2, 2);
+    }
+
+    #[test]
+    fn test_case_19() {
+        run_test_other("abcd", "ax", 0, "ax", 3, 3);
+    }
+
+    #[test]
+    fn test_case_20() {
+        run_test_other("abcd", "bx", 0, "bx", 3, 3);
+    }
+
+    #[test]
+    fn test_case_21() {
+        run_test_other("abcd", "cx", 0, "cx", 3, 3);
+    }
+
+    #[test]
+    fn test_case_22() {
+        run_test_other("abcd", "xa", 1, "a", 3, 3);
+    }
+
+    #[test]
+    fn test_case_23() {
+        run_test_other("abcd", "xb", 0, "xb", 3, 3);
+    }
+
+    #[test]
+    fn test_case_24() {
+        run_test_other("abcd", "xc", 0, "xc", 3, 3);
+    }
+
+    /*
+    [Test]
+    public void TestLevenshteinLinq()
+    {
+        var text = "---abcc----abc---axc--";
+        var term = "abc";
+
+        var results = FuzzySearch.FindLevenshtein(term, text, new FuzzySearchOptions(2)).ToList();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(results.Count, Is.EqualTo(3));
+            TestUtils.AssertMatch(results[0], 3, "abc", 0);
+            TestUtils.AssertMatch(results[1], 11, "abc", 0);
+            TestUtils.AssertMatch(results[2], 17, "axc", 1);
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(FuzzySearch.FindLevenshtein(term, text, new FuzzySearchOptions(3)).Any());
+            TestUtils.AssertMatch(FuzzySearch.FindLevenshtein(term, text, new FuzzySearchOptions(3)).First(), 3, "abc", 0);
+        });
+    } */
 }

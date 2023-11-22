@@ -43,7 +43,7 @@ impl<'a> FuzzySearchLevenshtein<'a> {
                 == subsequence
                     .chars()
                     .nth(candidate.subsequence_index)
-                    .unwrap()
+                    .expect("How did we end up here?")
         {
             if candidate.distance < best_found_distance
                 && options.can_insert(candidate.distance, candidate.insertions)
@@ -146,24 +146,10 @@ mod fuzzy_search_levenshtein_tests {
 
     #[test]
     fn test_all_results() {
-        run_find_levenshtein_all(
-            "pattern",
-            "---------------------pattttern",
-            // 21,
-            // "pattttern",
-            // 2,
-            3,
-        );
+        run_find_levenshtein_all("pattern", "---------------------pattttern", 3);
     }
 
-    fn run_find_levenshtein_all(
-        pattern: &str,
-        text: &str,
-        // expected_start: usize,
-        // expected_match: &str,
-        // expected_distance: usize,
-        max_distance: usize,
-    ) {
+    fn run_find_levenshtein_all(pattern: &str, text: &str, max_distance: usize) {
         let options = FuzzySearchOptions::new(max_distance);
         let all_results = FuzzySearchLevenshtein::find(pattern, text, &options).collect::<Vec<_>>();
 
