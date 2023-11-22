@@ -790,27 +790,22 @@ mod tests {
         run_test_other("abcd", "xc", 0, "xc", 3, 3);
     }
 
-    /*
-    [Test]
-    public void TestLevenshteinLinq()
-    {
-        var text = "---abcc----abc---axc--";
-        var term = "abc";
+    #[test]
+    fn test_iterator() {
+        let text = "---abcc----abc---axc--";
+        let pattern = "abc";
 
-        var results = FuzzySearch.FindLevenshtein(term, text, new FuzzySearchOptions(2)).ToList();
+        let options = FuzzySearchOptions::new(2);
+        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(results.Count, Is.EqualTo(3));
-            TestUtils.AssertMatch(results[0], 3, "abc", 0);
-            TestUtils.AssertMatch(results[1], 11, "abc", 0);
-            TestUtils.AssertMatch(results[2], 17, "axc", 1);
-        });
+        assert_eq!(3, results.len());
+        assert_match(&results[0], 3, "abc", 0);
+        assert_match(&results[1], 11, "abc", 0);
+        assert_match(&results[2], 17, "axc", 1);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(FuzzySearch.FindLevenshtein(term, text, new FuzzySearchOptions(3)).Any());
-            TestUtils.AssertMatch(FuzzySearch.FindLevenshtein(term, text, new FuzzySearchOptions(3)).First(), 3, "abc", 0);
-        });
-    } */
+        let first = FuzzySearch::find(pattern, text, &options).next();
+        assert!(first.is_some());
+
+        assert_match(&first.unwrap(), 3, "abc", 0);
+    }
 }
