@@ -2,8 +2,7 @@ use crate::{candidate_match::CandidateMatch, fuzzy_search_options::FuzzySearchOp
 
 pub struct FuzzySearchLevenshtein<'a> {
     pattern_chars: Vec<char>, // todo get rid of this...
-    // text: &'a str,            // todo no seriously, this will explode with graphemes
-    text_chars: Vec<char>, // todo get rid of this...
+    text_chars: Vec<char>,    // todo get rid of this...
     options: &'a FuzzySearchOptions,
     candidates: Vec<CandidateMatch>,
     current_text_index: usize,
@@ -15,9 +14,8 @@ impl<'a> FuzzySearchLevenshtein<'a> {
         Self {
             options,
             pattern_chars: pattern.chars().collect(),
-            // text,
             candidates: vec![CandidateMatch::new(0, 0)],
-            text_chars: text.chars().collect(),
+            text_chars: text.chars().collect(), // todo fix
             current_text_index: if pattern.len() == 0 {
                 // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
                 text.chars().collect::<Vec<_>>().len() + 1 // todo fix...

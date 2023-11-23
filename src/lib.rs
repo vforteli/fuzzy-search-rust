@@ -40,7 +40,13 @@ mod tests {
 
     #[test]
     fn test_pattern_pattern_with_grapheme() {
-        run_test("PATTERN", "👻👩‍👩‍👦‍👦PATTERN", 0, 5, "PATTERN", 0, 1);
+        run_test("PATTERN", "👩‍👩‍👦‍👦PATTERN", 0, 7, "PATTERN", 0, 1);
+    }
+
+    #[test]
+    fn test_grapheme() {
+        let text = "👩‍👩‍👦‍👦";
+        assert_eq!(7, text.chars().collect::<Vec<_>>().len());
     }
 
     #[test]

@@ -26,13 +26,16 @@ impl<'a, TIterator: Iterator<Item = CandidateMatch>> MatchConsolidator<'a, TIter
                     (b.text_index - b.start_index).cmp(&(a.text_index - a.start_index))
                 })
             })
-            .expect("uh, why no cancidatematch?");
+            .expect("uh, why no candidate match?");
 
         MatchResult {
             start_index: best_match.start_index,
             end_index: best_match.text_index,
             distance: best_match.distance,
-            match_text: text[best_match.start_index..best_match.text_index].to_string(),
+            match_text: text.chars().collect::<Vec<_>>()
+                [best_match.start_index..best_match.text_index]
+                .iter()
+                .collect::<String>(),
             deletions: best_match.deletions,
             insertions: best_match.insertions,
             substitutions: best_match.substitutions,
