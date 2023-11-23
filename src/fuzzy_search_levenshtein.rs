@@ -2,8 +2,8 @@ use crate::{candidate_match::CandidateMatch, fuzzy_search_options::FuzzySearchOp
 
 pub struct FuzzySearchLevenshtein<'a> {
     pattern_chars: Vec<char>, // todo get rid of this...
-    text: &'a str,            // todo no seriously, this will explode with graphemes
-    text_chars: Vec<char>,    // todo get rid of this...
+    // text: &'a str,            // todo no seriously, this will explode with graphemes
+    text_chars: Vec<char>, // todo get rid of this...
     options: &'a FuzzySearchOptions,
     candidates: Vec<CandidateMatch>,
     current_text_index: usize,
@@ -15,12 +15,12 @@ impl<'a> FuzzySearchLevenshtein<'a> {
         Self {
             options,
             pattern_chars: pattern.chars().collect(),
-            text,
+            // text,
             candidates: vec![CandidateMatch::new(0, 0)],
             text_chars: text.chars().collect(),
             current_text_index: if pattern.len() == 0 {
                 // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
-                text.len() + 1
+                text.chars().collect::<Vec<_>>().len() + 1 // todo fix...
             } else {
                 0
             },
@@ -89,10 +89,10 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
     type Item = CandidateMatch;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.current_text_index < self.text.len() {
+        while self.current_text_index < self.text_chars.len() {
             while let Some(candidate) = self.candidates.pop() {
                 if candidate.pattern_index == self.pattern_chars.len() {
-                    if candidate.text_index <= self.text.len() {
+                    if candidate.text_index <= self.text_chars.len() {
                         if candidate.distance == 0 {
                             self.candidates.clear();
                             self.current_text_index += 1;
@@ -117,7 +117,7 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
                         &self.pattern_chars,
                         self.best_found_distance,
                         self.options,
-                        self.text.len(),
+                        self.text_chars.len(),
                     );
                 }
             }

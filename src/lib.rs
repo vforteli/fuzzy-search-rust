@@ -39,6 +39,11 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_pattern_pattern_with_grapheme() {
+        run_test("PATTERN", "👻👩‍👩‍👦‍👦PATTERN", 0, 5, "PATTERN", 0, 1);
+    }
+
+    #[test]
     fn test_pattern_pattern() {
         run_test("PATTERN", "PATTERN", 0, 0, "PATTERN", 0, 1);
     }
