@@ -6,6 +6,7 @@ use match_result::MatchResult;
 pub mod candidate_match;
 mod fuzzy_search_levenshtein;
 pub mod fuzzy_search_options;
+pub mod fuzzy_search_substitutions_only;
 mod match_consolidator;
 pub mod match_result;
 
