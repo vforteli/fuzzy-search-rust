@@ -1,8 +1,8 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct CandidateMatch {
     pub start_index: usize,
     pub text_index: usize,
-    pub subsequence_index: usize,
+    pub pattern_index: usize,
     pub distance: usize,
     pub deletions: usize,
     pub substitutions: usize,
@@ -14,7 +14,7 @@ impl CandidateMatch {
         CandidateMatch {
             start_index,
             text_index,
-            subsequence_index: 0,
+            pattern_index: 0,
             distance: 0,
             deletions: 0,
             substitutions: 0,

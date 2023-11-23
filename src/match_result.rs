@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct MatchResult {
     pub start_index: usize,
     pub end_index: usize,
