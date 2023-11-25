@@ -1,8 +1,8 @@
 use crate::{candidate_match::CandidateMatch, fuzzy_search_options::FuzzySearchOptions};
 
 pub struct FuzzySearchLevenshtein<'a> {
-    pattern_chars: Vec<char>, // todo get rid of this...
-    text_chars: Vec<char>,    // todo get rid of this...
+    pattern_chars: Vec<char>,
+    text_chars: Vec<char>, // todo get rid of this...
     options: &'a FuzzySearchOptions,
     candidates: Vec<CandidateMatch>,
     current_text_index: usize,
@@ -11,14 +11,17 @@ pub struct FuzzySearchLevenshtein<'a> {
 
 impl<'a> FuzzySearchLevenshtein<'a> {
     pub fn find(pattern: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
+        let text_chars: Vec<char> = text.chars().collect(); // todo should get this as a refernce somehow...
+        let length = text_chars.len();
+
         Self {
             options,
             pattern_chars: pattern.chars().collect(),
             candidates: vec![CandidateMatch::new(0, 0)],
-            text_chars: text.chars().collect(), // todo fix
+            text_chars,
             current_text_index: if pattern.len() == 0 {
                 // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
-                text.chars().collect::<Vec<_>>().len() + 1 // todo fix...
+                length + 1
             } else {
                 0
             },

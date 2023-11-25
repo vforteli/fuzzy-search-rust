@@ -11,15 +11,16 @@ mod match_consolidator;
 pub mod match_result;
 
 pub struct FuzzySearch<'a> {
-    consolidated_matches: MatchConsolidator<'a, FuzzySearchLevenshtein<'a>>,
+    consolidated_matches: MatchConsolidator<FuzzySearchLevenshtein<'a>>,
+    text_chars: Vec<char>,
 }
 
 impl<'a> FuzzySearch<'a> {
     pub fn find(pattern: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
         Self {
+            text_chars: text.chars().collect(),
             consolidated_matches: MatchConsolidator::consolidate(
                 options.max_total_distance,
-                text,
                 FuzzySearchLevenshtein::find(pattern, text, options),
             ),
         }
@@ -30,7 +31,17 @@ impl<'a> Iterator for FuzzySearch<'a> {
     type Item = MatchResult;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.consolidated_matches.next()
+        self.consolidated_matches.next().map(|m| MatchResult {
+            start_index: m.start_index,
+            end_index: m.text_index,
+            distance: m.distance,
+            match_text: self.text_chars[m.start_index..m.text_index]
+                .iter()
+                .collect::<String>(),
+            deletions: m.deletions,
+            substitutions: m.substitutions,
+            insertions: m.insertions,
+        })
     }
 }
 
