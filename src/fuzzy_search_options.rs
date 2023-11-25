@@ -46,6 +46,7 @@ impl FuzzySearchOptions {
         }
     }
 
+    #[inline(always)]
     pub fn can_substitute(
         &self,
         current_total_distance: usize,
@@ -55,10 +56,12 @@ impl FuzzySearchOptions {
             && current_total_distance < self.max_total_distance
     }
 
+    #[inline(always)]
     pub fn can_delete(&self, current_total_distance: usize, current_deletions: usize) -> bool {
         current_deletions < self.max_deletions && current_total_distance < self.max_total_distance
     }
 
+    #[inline(always)]
     pub fn can_insert(&self, current_total_distance: usize, current_insertions: usize) -> bool {
         current_insertions < self.max_insertions && current_total_distance < self.max_total_distance
     }

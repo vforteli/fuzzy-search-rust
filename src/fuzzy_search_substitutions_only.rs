@@ -7,15 +7,18 @@ pub struct FuzzySearchSubstitutionsOnly {
     current_text_index: usize,
 }
 
-impl<'a> FuzzySearchSubstitutionsOnly {
-    pub fn find(pattern: &'a str, text: &'a str, max_distance: usize) -> Self {
+impl FuzzySearchSubstitutionsOnly {
+    pub fn find(pattern: &str, text: &str, max_distance: usize) -> Self {
+        let text_chars: Vec<_> = text.chars().collect();
+        let length = text_chars.len();
+
         Self {
             pattern_chars: pattern.chars().collect(),
             max_distance,
-            text_chars: text.chars().collect(),
+            text_chars,
             current_text_index: if pattern.len() == 0 || text.len() == 0 {
                 // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
-                text.len() + 1
+                length + 1
             } else {
                 0
             },
@@ -23,7 +26,7 @@ impl<'a> FuzzySearchSubstitutionsOnly {
     }
 }
 
-impl<'a> Iterator for FuzzySearchSubstitutionsOnly {
+impl Iterator for FuzzySearchSubstitutionsOnly {
     type Item = MatchResult;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -95,6 +98,14 @@ mod fuzzy_search_substitution_only_tests {
         assert_eq!(0, m.distance);
         assert_eq!(7, m.start_index); // todo this is a bit weird now since the index refers to the char array...
         assert_eq!(14, m.end_index); // todo same story here...
+    }
+    #[test]
+    fn test_grapheme_with_empty_pattern() {
+        let pattern = "";
+        let text = "👩‍👩‍👦‍👦PATTERN";
+
+        let matches = FuzzySearchSubstitutionsOnly::find(pattern, text, 1).collect::<Vec<_>>();
+        assert_eq!(0, matches.len());
     }
 
     #[test]
