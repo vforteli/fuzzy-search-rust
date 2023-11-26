@@ -7,6 +7,9 @@ readme = "README.md"
 repository = "https://github.com/vforteli/fuzzy-search-rust"
 license = "MIT"
 keywords = ["fuzzysearch", "fuzzy", "search", "levenshtein"]
+exclude = [
+    "benches/test_files/*"
+]
 
 [dev-dependencies]
 criterion = "0.4"
