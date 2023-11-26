@@ -2,11 +2,11 @@
 name = "fuzzysearchrs"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-
+description = "Fuzzy search for finding strings in string with levenshtein distance"
+readme = "README.md"
+repository = "https://github.com/vforteli/fuzzy-search-rust"
+license = "MIT"
+keywords = ["fuzzysearch", "fuzzy", "search", "levenshtein"]
 
 [dev-dependencies]
 criterion = "0.4"
