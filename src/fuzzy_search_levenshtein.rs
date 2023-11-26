@@ -1,9 +1,8 @@
 use crate::{candidate_match::CandidateMatch, fuzzy_search_options::FuzzySearchOptions};
 
 pub struct FuzzySearchLevenshtein<'a> {
-    pattern_chars: Vec<char>, // todo get rid of this...
-    text: &'a str,            // todo no seriously, this will explode with graphemes
-    text_chars: Vec<char>,    // todo get rid of this...
+    pattern_chars: Vec<char>,
+    text_chars: &'a [char],
     options: &'a FuzzySearchOptions,
     candidates: Vec<CandidateMatch>,
     current_text_index: usize,
@@ -11,16 +10,15 @@ pub struct FuzzySearchLevenshtein<'a> {
 }
 
 impl<'a> FuzzySearchLevenshtein<'a> {
-    pub fn find(pattern: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
+    pub fn find(pattern: &str, text_chars: &'a [char], options: &'a FuzzySearchOptions) -> Self {
         Self {
             options,
             pattern_chars: pattern.chars().collect(),
-            text,
             candidates: vec![CandidateMatch::new(0, 0)],
-            text_chars: text.chars().collect(),
+            text_chars,
             current_text_index: if pattern.len() == 0 {
                 // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
-                text.len() + 1
+                text_chars.len() + 1
             } else {
                 0
             },
@@ -89,10 +87,10 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
     type Item = CandidateMatch;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.current_text_index < self.text.len() {
+        while self.current_text_index < self.text_chars.len() {
             while let Some(candidate) = self.candidates.pop() {
                 if candidate.pattern_index == self.pattern_chars.len() {
-                    if candidate.text_index <= self.text.len() {
+                    if candidate.text_index <= self.text_chars.len() {
                         if candidate.distance == 0 {
                             self.candidates.clear();
                             self.current_text_index += 1;
@@ -117,7 +115,7 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
                         &self.pattern_chars,
                         self.best_found_distance,
                         self.options,
-                        self.text.len(),
+                        self.text_chars.len(),
                     );
                 }
             }
@@ -147,9 +145,11 @@ mod fuzzy_search_levenshtein_tests {
 
     fn run_find_levenshtein_all(pattern: &str, text: &str, max_distance: usize) {
         let options = FuzzySearchOptions::new(max_distance);
-        let all_results = FuzzySearchLevenshtein::find(pattern, text, &options).collect::<Vec<_>>();
+        let text = text.chars().collect::<Vec<_>>();
+        let all_results =
+            FuzzySearchLevenshtein::find(pattern, &text, &options).collect::<Vec<_>>();
 
-        println!("{:?}", all_results);
+        println!("{all_results:?}");
 
         assert_eq!(all_results.len(), 24);
     }

@@ -11,15 +11,16 @@ mod match_consolidator;
 pub mod match_result;
 
 pub struct FuzzySearch<'a> {
-    consolidated_matches: MatchConsolidator<'a, FuzzySearchLevenshtein<'a>>,
+    consolidated_matches: MatchConsolidator<FuzzySearchLevenshtein<'a>>,
+    text_chars: &'a [char],
 }
 
 impl<'a> FuzzySearch<'a> {
-    pub fn find(pattern: &'a str, text: &'a str, options: &'a FuzzySearchOptions) -> Self {
+    pub fn find(pattern: &str, text: &'a [char], options: &'a FuzzySearchOptions) -> Self {
         Self {
+            text_chars: text,
             consolidated_matches: MatchConsolidator::consolidate(
                 options.max_total_distance,
-                text,
                 FuzzySearchLevenshtein::find(pattern, text, options),
             ),
         }
@@ -30,13 +31,34 @@ impl<'a> Iterator for FuzzySearch<'a> {
     type Item = MatchResult;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.consolidated_matches.next()
+        self.consolidated_matches.next().map(|m| MatchResult {
+            start_index: m.start_index,
+            end_index: m.text_index,
+            distance: m.distance,
+            match_text: self.text_chars[m.start_index..m.text_index]
+                .iter()
+                .collect::<String>(),
+            deletions: m.deletions,
+            substitutions: m.substitutions,
+            insertions: m.insertions,
+        })
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_pattern_pattern_with_grapheme() {
+        run_test("PATTERN", "👩‍👩‍👦‍👦PATTERN", 0, 7, "PATTERN", 0, 1);
+    }
+
+    #[test]
+    fn test_grapheme() {
+        let text = "👩‍👩‍👦‍👦";
+        assert_eq!(7, text.chars().collect::<Vec<_>>().len());
+    }
 
     #[test]
     fn test_pattern_pattern() {
@@ -225,7 +247,8 @@ mod tests {
         expected_match_count: usize,
     ) {
         let options = FuzzySearchOptions::new(max_distance);
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), expected_match_count);
 
@@ -256,7 +279,8 @@ mod tests {
         let text = "--patteron--";
         let options = FuzzySearchOptions::with_individual_limits(1, 0, 0);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 1);
         assert_match(&results[0], 2, "pattero", 1);
@@ -268,7 +292,8 @@ mod tests {
         let text = "--patternsaxdpractices--";
         let options = FuzzySearchOptions::with_limits(1, Some(0), None, None);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 0);
     }
@@ -279,7 +304,8 @@ mod tests {
         let text = "--patteron--";
         let options = FuzzySearchOptions::with_individual_limits(0, 0, 1);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 1);
         assert_match(&results[0], 2, "patteron", 1);
@@ -291,7 +317,8 @@ mod tests {
         let text = "--patternsaxndpractices--";
         let options = FuzzySearchOptions::with_limits(1, None, None, Some(0));
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 0);
     }
@@ -302,7 +329,8 @@ mod tests {
         let text = "--patteron--";
         let options = FuzzySearchOptions::with_individual_limits(0, 1, 0);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 1);
         assert_match(&results[0], 2, "patter", 1);
@@ -314,7 +342,8 @@ mod tests {
         let text = "--patternandpractices--";
         let options = FuzzySearchOptions::with_limits(1, None, Some(0), None);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 0);
     }
@@ -325,7 +354,8 @@ mod tests {
         let text = "--pattermpatyern--";
         let options = FuzzySearchOptions::new(2);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 2);
         assert_match(&results[0], 2, "patterm", 1);
@@ -338,7 +368,8 @@ mod tests {
         let text = "--patyternpatxtern--";
         let options = FuzzySearchOptions::new(1);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 2);
         assert_match(&results[0], 2, "patytern", 1);
@@ -351,7 +382,8 @@ mod tests {
         let text = "--pattpatterntern--";
         let options = FuzzySearchOptions::new(2);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 1);
         assert_match(&results[0], 6, "pattern", 0);
@@ -363,7 +395,8 @@ mod tests {
         let text = "--pattrnpttern--";
         let options = FuzzySearchOptions::new(2);
 
-        let results = FuzzySearch::find(word, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(word, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 2);
         assert_match(&results[0], 2, "pattrn", 1);
@@ -376,7 +409,8 @@ mod tests {
         let text = "";
         let options = FuzzySearchOptions::new(2);
 
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 0);
     }
@@ -387,7 +421,8 @@ mod tests {
         let text = "sometext";
         let options = FuzzySearchOptions::new(2);
 
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 0);
     }
@@ -398,7 +433,8 @@ mod tests {
         let text = "";
         let options = FuzzySearchOptions::new(2);
 
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 0);
     }
@@ -410,7 +446,8 @@ mod tests {
         let expected_matches = 1;
         let options = FuzzySearchOptions::new(1);
 
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), expected_matches);
         assert_match(&results[0], 0, "PATERN", 1);
@@ -423,7 +460,8 @@ mod tests {
         let expected_matches = 0;
         let options = FuzzySearchOptions::new(1);
 
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), expected_matches);
     }
@@ -437,7 +475,8 @@ mod tests {
         max_distance: usize,
     ) {
         let options = FuzzySearchOptions::new(max_distance);
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(results.len(), 1);
 
@@ -797,14 +836,15 @@ mod tests {
         let pattern = "abc";
 
         let options = FuzzySearchOptions::new(2);
-        let results = FuzzySearch::find(pattern, text, &options).collect::<Vec<_>>();
+        let results = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options)
+            .collect::<Vec<_>>();
 
         assert_eq!(3, results.len());
         assert_match(&results[0], 3, "abc", 0);
         assert_match(&results[1], 11, "abc", 0);
         assert_match(&results[2], 17, "axc", 1);
 
-        let first = FuzzySearch::find(pattern, text, &options).next();
+        let first = FuzzySearch::find(pattern, &text.chars().collect::<Vec<_>>(), &options).next();
         assert!(first.is_some());
 
         assert_match(&first.unwrap(), 3, "abc", 0);

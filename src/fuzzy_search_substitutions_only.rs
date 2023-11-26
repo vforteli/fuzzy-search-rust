@@ -1,23 +1,24 @@
 use crate::match_result::MatchResult;
 
-pub struct FuzzySearchSubstitutionsOnly<'a> {
-    pattern_chars: Vec<char>, // todo get rid of this...
-    text: &'a str,
-    text_chars: Vec<char>, // todo get rid of this...
+pub struct FuzzySearchSubstitutionsOnly {
+    pattern_chars: Vec<char>,
+    text_chars: Vec<char>,
     max_distance: usize,
     current_text_index: usize,
 }
 
-impl<'a> FuzzySearchSubstitutionsOnly<'a> {
-    pub fn find(pattern: &'a str, text: &'a str, max_distance: usize) -> Self {
+impl FuzzySearchSubstitutionsOnly {
+    pub fn find(pattern: &str, text: &str, max_distance: usize) -> Self {
+        let text_chars: Vec<_> = text.chars().collect();
+        let length = text_chars.len();
+
         Self {
             pattern_chars: pattern.chars().collect(),
-            text,
             max_distance,
-            text_chars: text.chars().collect(),
+            text_chars,
             current_text_index: if pattern.len() == 0 || text.len() == 0 {
                 // this is basically here to eagerly terminate stuff if pattern is an empty string without checking in the next function
-                text.len() + 1
+                length + 1
             } else {
                 0
             },
@@ -25,7 +26,7 @@ impl<'a> FuzzySearchSubstitutionsOnly<'a> {
     }
 }
 
-impl<'a> Iterator for FuzzySearchSubstitutionsOnly<'a> {
+impl Iterator for FuzzySearchSubstitutionsOnly {
     type Item = MatchResult;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -59,9 +60,11 @@ impl<'a> Iterator for FuzzySearchSubstitutionsOnly<'a> {
                     start_index: current_index,
                     end_index: current_index + self.pattern_chars.len(),
                     distance: candidate_distance,
-                    match_text: self.text
+                    match_text: self.text_chars
                         [current_index..(current_index + self.pattern_chars.len())]
-                        .to_string(), // this will explode with graphemes.. probably
+                        .iter()
+                        .collect::<String>(),
+
                     deletions: 0,
                     insertions: 0,
                     substitutions: candidate_distance,
@@ -81,6 +84,28 @@ mod fuzzy_search_substitution_only_tests {
         assert_eq!(start_index, m.start_index);
         assert_eq!(end_index, m.end_index);
         assert_eq!(text[start_index..end_index], m.match_text);
+    }
+
+    #[test]
+    fn test_pattern_pattern_with_grapheme() {
+        let pattern = "PATTERN";
+        let text = "👩‍👩‍👦‍👦PATTERN";
+
+        let matches = FuzzySearchSubstitutionsOnly::find(pattern, text, 1).collect::<Vec<_>>();
+        let m = &matches[0];
+
+        assert_eq!(pattern, m.match_text);
+        assert_eq!(0, m.distance);
+        assert_eq!(7, m.start_index); // todo this is a bit weird now since the index refers to the char array...
+        assert_eq!(14, m.end_index); // todo same story here...
+    }
+    #[test]
+    fn test_grapheme_with_empty_pattern() {
+        let pattern = "";
+        let text = "👩‍👩‍👦‍👦PATTERN";
+
+        let matches = FuzzySearchSubstitutionsOnly::find(pattern, text, 1).collect::<Vec<_>>();
+        assert_eq!(0, matches.len());
     }
 
     #[test]

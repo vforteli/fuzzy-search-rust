@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CandidateMatch {
     pub start_index: usize,
     pub text_index: usize,
