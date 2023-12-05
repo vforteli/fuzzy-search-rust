@@ -3,11 +3,12 @@ use fuzzy_search_options::FuzzySearchOptions;
 use match_consolidator::MatchConsolidator;
 use match_result::MatchResult;
 
-pub mod candidate_match;
+mod candidate_match;
 mod fuzzy_search_levenshtein;
+mod match_consolidator;
+
 pub mod fuzzy_search_options;
 pub mod fuzzy_search_substitutions_only;
-mod match_consolidator;
 pub mod match_result;
 
 pub struct FuzzySearch<'a> {
