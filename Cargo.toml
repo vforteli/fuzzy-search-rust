@@ -17,3 +17,6 @@ criterion = "0.4"
 [[bench]]
 name = "benchmark"
 harness = false
+
+[lib]
+bench = false
