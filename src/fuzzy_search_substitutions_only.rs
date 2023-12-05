@@ -5,15 +5,22 @@ pub struct FuzzySearchSubstitutionsOnly {
     text_chars: Vec<char>,
     max_distance: usize,
     current_text_index: usize,
+    last_index: usize,
 }
 
 impl FuzzySearchSubstitutionsOnly {
     pub fn find(pattern: &str, text: &str, max_distance: usize) -> Self {
         let text_chars: Vec<_> = text.chars().collect();
         let length = text_chars.len();
+        let pattern_chars: Vec<_> = pattern.chars().collect();
+        let last_index = text_chars
+            .len()
+            .checked_sub(pattern_chars.len())
+            .unwrap_or(0)
+            + 1;
 
         Self {
-            pattern_chars: pattern.chars().collect(),
+            pattern_chars,
             max_distance,
             text_chars,
             current_text_index: if pattern.len() == 0 || text.len() == 0 {
@@ -22,6 +29,7 @@ impl FuzzySearchSubstitutionsOnly {
             } else {
                 0
             },
+            last_index,
         }
     }
 }
@@ -30,36 +38,30 @@ impl Iterator for FuzzySearchSubstitutionsOnly {
     type Item = MatchResult;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.current_text_index
-            < self
-                .text_chars
-                .len()
-                .checked_sub(self.pattern_chars.len())
-                .unwrap_or(0)
-                + 1
-        {
+        while self.current_text_index < self.last_index {
             let current_index = self.current_text_index;
             self.current_text_index += 1;
 
-            let mut needle_position = current_index;
-            let mut candidate_distance = 0;
+            let m = &self.text_chars[current_index..current_index + self.pattern_chars.len()]
+                .iter()
+                .zip(&self.pattern_chars)
+                .try_fold(0, |a, v| {
+                    let distance = match v.0 == v.1 {
+                        true => a,
+                        false => a + 1,
+                    };
 
-            for pattern_index in 0..self.pattern_chars.len() {
-                if self.text_chars[needle_position] != self.pattern_chars[pattern_index] {
-                    candidate_distance += 1;
-                    if candidate_distance > self.max_distance {
-                        break;
+                    match distance > self.max_distance {
+                        true => None,
+                        false => Some(distance),
                     }
-                }
+                });
 
-                needle_position += 1;
-            }
-
-            if candidate_distance <= self.max_distance {
+            if let Some(distance) = m {
                 return Some(MatchResult {
                     start_index: current_index,
                     end_index: current_index + self.pattern_chars.len(),
-                    distance: candidate_distance,
+                    distance: *distance,
                     match_text: self.text_chars
                         [current_index..(current_index + self.pattern_chars.len())]
                         .iter()
@@ -67,7 +69,7 @@ impl Iterator for FuzzySearchSubstitutionsOnly {
 
                     deletions: 0,
                     insertions: 0,
-                    substitutions: candidate_distance,
+                    substitutions: *distance,
                 });
             }
         }
