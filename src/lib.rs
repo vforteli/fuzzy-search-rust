@@ -1,3 +1,5 @@
+#![feature(portable_simd)]
+
 use fuzzy_search_levenshtein::FuzzySearchLevenshtein;
 use fuzzy_search_options::FuzzySearchOptions;
 use match_consolidator::MatchConsolidator;
@@ -9,6 +11,7 @@ mod match_consolidator;
 
 pub mod fuzzy_search_options;
 pub mod fuzzy_search_substitutions_only;
+pub mod fuzzy_search_substitutions_only_simd;
 pub mod match_result;
 
 pub struct FuzzySearch<'a> {
