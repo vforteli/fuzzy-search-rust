@@ -66,7 +66,6 @@ impl Iterator for FuzzySearchSubstitutionsOnly {
                         [current_index..(current_index + self.pattern_chars.len())]
                         .iter()
                         .collect::<String>(),
-
                     deletions: 0,
                     insertions: 0,
                     substitutions: *distance,
