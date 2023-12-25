@@ -91,6 +91,7 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
             while let Some(candidate) = self.candidates.pop() {
                 if candidate.pattern_index == self.pattern_chars.len() {
                     if candidate.text_index <= self.text_chars.len() {
+                        // if we find a perfect match, there is no point searching for other matches in this cluster
                         if candidate.distance == 0 {
                             self.candidates.clear();
                             self.current_text_index += 1;
@@ -102,10 +103,6 @@ impl<'a> Iterator for FuzzySearchLevenshtein<'a> {
 
                         self.best_found_distance = candidate.distance;
                         return Some(candidate);
-                    }
-
-                    if candidate.distance == 0 {
-                        self.candidates.clear();
                     }
                 } else {
                     Self::handle_candidate(
